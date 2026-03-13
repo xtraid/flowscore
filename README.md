@@ -89,4 +89,4 @@ python demo/flowscore_demo.py --user 42
 ---
 
 ## Status
-🚧 Work in progress — Hackathon: March 13–17, 2026
+🚧 Work in progress — Hackathon: March 13–16, 2026
