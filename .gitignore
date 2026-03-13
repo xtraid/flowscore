@@ -1,6 +1,35 @@
 # dipendenze
 node_modules/
+cxVenv/
 venv/
+.venv/
+env/
+
+# file compilati Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+
+# variabili d'ambiente
+.env
+.env.local
+
+# cartelle di IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db# dipendenze
+node_modules/
+cxVenv/
 
 # file compilati
 __pycache__/
