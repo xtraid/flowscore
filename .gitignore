@@ -1,0 +1,14 @@
+# dipendenze
+node_modules/
+venv/
+
+# file compilati
+__pycache__/
+*.pyc
+
+# variabili d'ambiente
+.env
+
+# cartelle di IDE
+.vscode/
+.idea/
