@@ -2,6 +2,10 @@ df= read.csv("../data/profiles.csv")
 
 #importo libreria per fare vif
 library(car)
+#libreria per fare training test
+library(pROC)
+#libreria per cross-valutation
+library(caret)
 
 df$working_category <- as.factor(df$working_category)
 
@@ -56,15 +60,49 @@ df$percentage_debt <- df$bnpl_exposure/df$mean_income
 #liquidità su spese, gestire se non ho risparmi
 df$liquidity_buffer <- ifelse(df$mean_saving == 0, NA, df$mean_fixed_exp/df$mean_saving)
 
+#training
+# 1. DIVIDI i dati PRIMA di fare qualsiasi cosa
+set.seed(123) # per riproducibilità
+train_idx <- sample(1:nrow(df), 0.7*nrow(df)) # 70% training
+train <- df[train_idx, ]
+test <- df[-train_idx, ] # 30% test
 
 #calcolo il modello con variabile risposta il default
+modelT <- glm(bool_defaults ~ mean_income + percentage_sd + working_category + percentage_fixed_exp + percentage_debt
+             + pay_on_time_bills  + income_trend + percentage_saving,
+             data = train,
+             family = binomial)
+
+
+# 3. VALUTA su test (dati mai visti)
+test_predictions <- predict(modelT, newdata = test, type = "response")
+# 4. CONFRONTA performance
+
+# Performance su train (ottimistica)
+train_auc <- auc(roc(train$bool_defaults,
+                     predict(modelT, type = "response")))
+# Performance su test (realistica)
+test_auc <- auc(roc(test$bool_defaults, test_predictions))
+cat("AUC Train:", train_auc, "\n")
+cat("AUC Test:", test_auc, "\n")
+#cross-valutation
+ctrl <- trainControl(method = "cv", number = 10) # 10-fold CV
+# Ripete train/test 10 volte su split diversi
+df$bool_defaultsT <- factor(df$bool_defaults, levels = c(0,1), labels = c("no", "yes"))
+cv_model <- train(bool_defaultsT ~ mean_income + percentage_sd + working_category + percentage_fixed_exp + percentage_debt
+                  + pay_on_time_bills  + income_trend + percentage_saving,
+                  data = df,
+                  method = "glm",
+                  family = binomial,
+                  trControl = ctrl)
+cv_model$results # Media delle performance su 10 split
+
 model <- glm(bool_defaults ~ mean_income + percentage_sd + working_category + percentage_fixed_exp + percentage_debt
              + pay_on_time_bills  + income_trend + percentage_saving,
              data = df,
              family = binomial)
 summary(model)
 anova(model)
-
 #vedo la correlazione
 vif(model)
 #calcolo flowscore
