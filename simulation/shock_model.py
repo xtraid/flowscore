@@ -12,19 +12,6 @@ def read_data(file):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 def main ():
     df=read_data('data/profiles.csv')
     print(df.head())

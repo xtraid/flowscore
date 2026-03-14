@@ -302,97 +302,93 @@ def generate_debt_hist_via_purchases(
     pay_on_time_bills: float,
     working_category:  str,
     rng:               np.random.Generator,
-) -> List[float]:
+) -> Tuple[List[float], List[float]]:
     """
-    Simulate realistic BNPL debt history by modelling discrete purchase events
-    and monthly instalment repayments.
+    Simulate BNPL purchase events and return planned debt schedule + payment dues.
 
-    Non-users (bnpl_exposure == 0) return [0, 0, 0, 0, 0, 0].
+    Returns
+    -------
+    bnpl_debt_planned : List[float]
+        Remaining BNPL debt at each month assuming all instalments paid on time.
+        Scaled so bnpl_debt_planned[5] ≈ bnpl_exposure (calibration anchor).
+    bnpl_payment_due : List[float]
+        Monthly BNPL instalment due at each month (0 if no payment that month).
 
-    For BNPL users:
-      1. Assign behavioural archetype (Accumulator / Moderate / Light).
-      2. Generate 1–4 purchase events, each with a purchase month (0–4),
-         amount (€80–400), and 3 or 4 instalments.
-      3. Simulate month-by-month debt: at purchase_month full amount is owed;
-         each subsequent month one instalment is repaid (Accumulators skip
-         a payment with probability 0.20).
-      4. debt_raw[t] = sum of remaining debt across all active purchases.
-      5. Ensure the last purchase falls in month 3 or 4 so debt_raw[5] > 0.
-      6. Scale the whole series so debt[5] == bnpl_exposure exactly.
+    Non-users return ([0]*6, [0]*6).
+
+    Design
+    ------
+    Archetype governs number of purchases and skip probability:
+      Accumulator (pay_on_time < 0.5, common in gig): 2–4 purchases
+      Moderate    (0.5 ≤ pay_on_time < 0.8):           1–2 purchases
+      Light       (pay_on_time ≥ 0.8):                 1 purchase
+    The last purchase is forced to month 3 or 4 to guarantee debt at month 5.
     """
     if bnpl_exposure == 0.0:
-        return [0.0] * N_MONTHS
+        return [0.0] * N_MONTHS, [0.0] * N_MONTHS
 
     # ── Archetype assignment ───────────────────────────────────────────────────
     if pay_on_time_bills < 0.5:
-        archetype  = 'accumulator'
-        skip_prob  = 0.20
+        archetype   = 'accumulator'
         n_purchases = int(rng.integers(2, 5))   # 2–4
     elif pay_on_time_bills >= 0.8:
-        archetype  = 'light'
-        skip_prob  = 0.0
+        archetype   = 'light'
         n_purchases = 1
     else:
-        archetype  = 'moderate'
-        skip_prob  = 0.0
+        archetype   = 'moderate'
         n_purchases = int(rng.integers(1, 3))   # 1–2
 
     # Category nudge
     if working_category == 'gig' and archetype != 'accumulator' and rng.random() < 0.25:
-        archetype  = 'accumulator'
-        skip_prob  = 0.20
+        archetype   = 'accumulator'
         n_purchases = max(n_purchases, 2)
     elif working_category == 'fixed_term' and archetype == 'accumulator' and rng.random() < 0.20:
-        archetype  = 'moderate'
-        skip_prob  = 0.0
+        archetype   = 'moderate'
 
-    # ── Generate purchase months ───────────────────────────────────────────────
-    # All early purchases: months 0–4; the last one is forced to month 3–4
-    # so there is guaranteed remaining debt at month 5 (for calibration).
-    purchase_months: List[int] = []
-    for i in range(n_purchases):
-        if i == n_purchases - 1:
-            pm = int(rng.integers(3, 5))   # month 3 or 4
-        else:
-            pm = int(rng.integers(0, 5))   # month 0–4
-        purchase_months.append(pm)
-
-    # ── Simulate each purchase and accumulate debt ────────────────────────────
-    debt_raw = [0.0] * N_MONTHS
-
-    for pm in purchase_months:
+    # ── Generate purchase events ───────────────────────────────────────────────
+    # Last purchase forced to month 3 or 4 → guarantees debt_planned[5] > 0.
+    events: List[Tuple[int, float, int]] = []   # (purchase_month, amount, n_inst)
+    for idx in range(n_purchases):
+        pm     = int(rng.integers(3, 5)) if idx == n_purchases - 1 else int(rng.integers(0, 5))
         amount = float(rng.uniform(80.0, 400.0))
         n_inst = int(rng.choice([3, 4]))
-        rate   = amount / n_inst
-        remaining = amount
+        events.append((pm, amount, n_inst))
 
+    # ── Build planned-debt and payment-due arrays ─────────────────────────────
+    debt_planned = [0.0] * N_MONTHS
+    payment_due  = [0.0] * N_MONTHS
+
+    for pm, amount, n_inst in events:
+        rate      = amount / n_inst
+        remaining = amount
         for t in range(N_MONTHS):
             if t < pm:
                 continue
             elif t == pm:
-                # Full amount owed at purchase month (no payment yet)
-                debt_raw[t] += remaining
+                debt_planned[t] += remaining   # full debt at purchase month
+                # no instalment due at purchase month itself
             else:
-                # Attempt to pay one instalment
-                if remaining > 0.0:
-                    if archetype == 'accumulator' and rng.random() < skip_prob:
-                        pass   # missed payment – debt unchanged
-                    else:
-                        remaining = max(0.0, remaining - rate)
-                debt_raw[t] += remaining
+                installment_idx = t - pm       # 1, 2, 3 …
+                if installment_idx <= n_inst and remaining > 0.0:
+                    payment_due[t] += rate
+                    remaining       = max(0.0, remaining - rate)
+                debt_planned[t] += remaining
 
-    # ── Calibrate: scale so debt_raw[5] == bnpl_exposure ─────────────────────
-    if debt_raw[5] > 0.0:
-        scale    = bnpl_exposure / debt_raw[5]
-        debt_raw = [v * scale for v in debt_raw]
+    # ── Scale to bnpl_exposure so payment sizes are in the right ballpark ────
+    if debt_planned[5] > 0.0:
+        scale        = bnpl_exposure / debt_planned[5]
+        debt_planned = [v * scale for v in debt_planned]
+        payment_due  = [v * scale for v in payment_due]
     else:
-        # Fallback (should not happen with the forced late purchase)
-        debt_raw = [0.0] * (N_MONTHS - 1) + [bnpl_exposure]
+        # Fallback: should not happen with forced late purchase
+        debt_planned = [0.0] * (N_MONTHS - 1) + [bnpl_exposure]
 
-    # Force exact final constraint (floating-point guard)
-    debt_raw[-1] = bnpl_exposure
+    debt_planned[-1] = bnpl_exposure   # floating-point guard
 
-    return [round(v, 2) for v in debt_raw]
+    return (
+        [round(v, 2) for v in debt_planned],
+        [round(v, 2) for v in payment_due],
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -518,36 +514,71 @@ def main() -> None:
         fixed_exp_hist    = generate_fixed_exp_hist(params.base_fixed_exp, rng)
         variable_exp_hist = generate_variable_exp_hist(income_hist, params.working_category, rng)
 
-        # ── Iterative saving balance ─────────────────────────────────────────
-        saving_hist: List[float] = []
-        balance = params.initial_saving
+        # ── Stress balance (can go negative) – used only for pay_on_time + defaults ──
+        # Approximates the old model so behavioural features remain diverse.
+        stress_balance = params.initial_saving
+        stress_hist: List[float] = []
         for m in range(N_MONTHS):
-            balance = (
-                balance
-                + income_hist[m]
+            stress_balance += (
+                income_hist[m]
                 - fixed_exp_hist[m]
                 - variable_exp_hist[m]
-                - params.bnpl_exposure
+                - params.bnpl_exposure   # flat monthly BNPL cost as proxy
             )
-            saving_hist.append(round(balance, 2))
+            stress_hist.append(stress_balance)
 
-        # ── Derived features ─────────────────────────────────────────────────
-        # Fraction of months where balance stayed above -€50 (small overdraft tolerated)
-        pay_on_time = sum(s > -50.0 for s in saving_hist) / N_MONTHS
+        pay_on_time = sum(s > -50.0 for s in stress_hist) / N_MONTHS
 
         int_defaults = assign_defaults(
-            saving_hist=saving_hist,
+            saving_hist=stress_hist,
             income_hist=income_hist,
             bnpl_exposure=params.bnpl_exposure,
             rng=rng,
         )
 
-        debt_hist = generate_debt_hist_via_purchases(
+        # ── BNPL purchase simulation → planned debt + payment schedule ────────
+        bnpl_planned, bnpl_due = generate_debt_hist_via_purchases(
             bnpl_exposure=params.bnpl_exposure,
             pay_on_time_bills=pay_on_time,
             working_category=params.working_category,
             rng=rng,
         )
+
+        # ── Cash-flow simulation: saving_hist ≥ 0, debt_hist = BNPL + revolving ─
+        # When cash flow turns negative the deficit becomes revolving debt
+        # (overdraft / scoperto); saving_hist is always clamped to 0.
+        balance  = params.initial_saving
+        revolving = 0.0
+        saving_hist: List[float] = []
+        debt_hist_raw: List[float] = []
+
+        for m in range(N_MONTHS):
+            # Gross cash flow (income minus expenses, before BNPL)
+            balance += income_hist[m] - fixed_exp_hist[m] - variable_exp_hist[m]
+            if balance < 0.0:
+                revolving += -balance
+                balance    = 0.0
+
+            # Pay BNPL instalment with whatever is available
+            due  = bnpl_due[m]
+            paid = min(balance, due)
+            balance   -= paid
+            revolving += (due - paid)   # missed portion accumulates as revolving debt
+
+            saving_hist.append(round(balance, 2))
+            debt_hist_raw.append(bnpl_planned[m] + revolving)
+
+        # ── Calibrate debt_hist so debt[5] == bnpl_exposure exactly ──────────
+        # (bnpl_planned[5] == bnpl_exposure, revolving pushes raw total above;
+        #  scale the whole series back down to the target.)
+        if params.bnpl_exposure == 0.0:
+            debt_hist: List[float] = [0.0] * N_MONTHS
+        elif debt_hist_raw[-1] > 0.0:
+            scale     = params.bnpl_exposure / debt_hist_raw[-1]
+            debt_hist = [round(v * scale, 2) for v in debt_hist_raw]
+            debt_hist[-1] = round(params.bnpl_exposure, 2)
+        else:
+            debt_hist = [0.0] * (N_MONTHS - 1) + [round(params.bnpl_exposure, 2)]
 
         rows.append({
             'id':                        i,
@@ -603,10 +634,17 @@ def main() -> None:
     ).sum()
     print(f"\n  Profiles with fixed-cost step change: {n_step} ({100*n_step/len(df):.1f}%)")
 
+    n_zero_saving = df['monthly_saving_hist'].apply(
+        lambda s: any(v == 0.0 for v in json.loads(s))
+    ).sum()
+    print(f"  Profiles with at least one saving=0 month (cash depleted): "
+          f"{n_zero_saving} ({100*n_zero_saving/len(df):.1f}%)")
+
+    # Sanity check: saving_hist should always be >= 0
     n_neg = df['monthly_saving_hist'].apply(
         lambda s: any(v < 0 for v in json.loads(s))
     ).sum()
-    print(f"  Profiles with any negative saving balance: {n_neg} ({100*n_neg/len(df):.1f}%)")
+    print(f"  Profiles with negative saving (should be 0): {n_neg}")
 
     print("\n  int_defaults distribution (response variable):")
     for v in [0, 1, 2]:
@@ -615,25 +653,33 @@ def main() -> None:
     n_def = int((df['int_defaults'] > 0).sum())
     print(f"    --- any default:  {n_def:>4}  ({100*n_def/len(df):.1f}%)")
 
-    print(f"\n  BNPL users: {int((df['bnpl_exposure'] > 0).sum())} / {len(df)}")
-    print(f"  Mean BNPL (when active): "
-          f"EUR {df.loc[df['bnpl_exposure'] > 0, 'bnpl_exposure'].mean():.0f}/month")
+    n_bnpl = int((df['bnpl_exposure'] > 0).sum())
+    print(f"\n  BNPL users: {n_bnpl} / {len(df)}")
+    print(f"  Mean total debt at month 5 (BNPL users): "
+          f"EUR {df.loc[df['bnpl_exposure'] > 0, 'bnpl_exposure'].mean():.0f}")
 
-    print("\n  Debt trajectory patterns (BNPL users only, first 10 examples):")
+    # Debt breakdown: BNPL component vs revolving/overdraft
+    # Approximate BNPL share: months with debt[t] > 0 before any cash stress
+    bnpl_mask = df['bnpl_exposure'] > 0
+    saving_zeros = df.loc[bnpl_mask, 'monthly_saving_hist'].apply(
+        lambda s: sum(1 for v in json.loads(s) if v == 0.0)
+    )
+    print(f"  Among BNPL users, avg months with saving=0: {saving_zeros.mean():.1f}")
+
+    print("\n  Debt + saving trajectory (BNPL users, first 10):")
     bnpl_df = df[df['bnpl_exposure'] > 0].head(10)
     for _, row in bnpl_df.iterrows():
-        debt_vals = json.loads(row['debt_hist'])
-        max_debt  = max(debt_vals)
+        debt_vals  = json.loads(row['debt_hist'])
+        save_vals  = json.loads(row['monthly_saving_hist'])
+        max_debt   = max(debt_vals)
         peak_month = int(np.argmax(debt_vals))
         final_debt = debt_vals[-1]
-        if peak_month < 5:
-            trend = "repaying" if final_debt < max_debt else "recovering"
-        else:
-            trend = "growing"
-        vals_str = "[" + ", ".join(f"{v:.0f}" for v in debt_vals) + "]"
-        print(f"    ID {int(row['id']):<4}: debt={vals_str}  "
-              f"max=€{max_debt:.0f} @month_{peak_month}  "
-              f"final=€{final_debt:.0f}  ({trend})")
+        trend      = "repaying" if peak_month < 5 else "growing"
+        d_str = "[" + ", ".join(f"{v:.0f}" for v in debt_vals) + "]"
+        s_str = "[" + ", ".join(f"{v:.0f}" for v in save_vals) + "]"
+        print(f"    ID {int(row['id']):<4}: debt={d_str}  saving={s_str}")
+        print(f"           max=€{max_debt:.0f} @month_{peak_month}  "
+              f"final=€{final_debt:.0f}  target_bnpl=€{row['bnpl_exposure']:.0f}  ({trend})")
 
     print(f"\n  Saved -> data/profiles.csv")
     print(f"{'='*55}\n")
