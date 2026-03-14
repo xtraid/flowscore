@@ -11,15 +11,15 @@ Output
 
 Schema
 ------
-  id                   int
-  monthly_income_hist  str  JSON list of 6 monthly income values (€)
-  monthly_fixed_exp    float  average monthly fixed costs (€)
-  monthly_variable_exp float  average monthly variable spending (€)
-  monthly_saving_hist  str  JSON list of 6 running savings balances (€)
-  working_category     str  gig | part_time | freelance | fixed_term
-  pay_on_time_bills    float  [0,1]  fraction of months balance > -50 €
-  int_defaults         int   0 / 1 / 2   historical default count
-  bnpl_exposure        float  average monthly BNPL instalment cost (€)
+  id                        int
+  monthly_income_hist       str  JSON list of 6 monthly income values (€)
+  monthly_fixed_exp_hist    str  JSON list of 6 monthly fixed costs (€)
+  monthly_variable_exp_hist str  JSON list of 6 monthly variable spending (€)
+  monthly_saving_hist       str  JSON list of 6 running savings balances (€)
+  working_category          str  gig | part_time | freelance | fixed_term
+  pay_on_time_bills         float  [0,1]  fraction of months balance > -50 €
+  int_defaults              int   0 / 1 / 2   historical default count
+  bnpl_exposure             float  average monthly BNPL instalment cost (€)
 
 Run
 ---
@@ -74,6 +74,22 @@ TYPE_CV_RANGE: Dict[str, Tuple[float, float]] = {
     'fixed_term': (0.03, 0.08),
 }
 
+# Fraction of mean income spent on variable expenses, by category
+TYPE_VAR_FRACTION_RANGE: Dict[str, Tuple[float, float]] = {
+    'gig':        (0.25, 0.35),
+    'freelance':  (0.30, 0.40),
+    'part_time':  (0.35, 0.45),
+    'fixed_term': (0.40, 0.50),
+}
+
+# Month-to-month volatility of variable expenses (sigma = baseline * factor)
+TYPE_VAR_VOLATILITY: Dict[str, float] = {
+    'gig':        0.40,
+    'freelance':  0.30,
+    'part_time':  0.20,
+    'fixed_term': 0.15,
+}
+
 GIG_ZERO_MONTH_PROB = 0.12   # probability of a near-zero income month (injury/no gigs)
 
 
@@ -87,30 +103,27 @@ class ProfileParams:
     working_category: str
     base_income:      float   # monthly target (€)
     income_cv:        float   # intra-type income variability
-    fixed_exp:        float   # monthly fixed costs (€)
+    base_fixed_exp:   float   # baseline fixed costs (€/month) before any step change
     initial_saving:   float   # starting balance (€)
     bnpl_exposure:    float   # monthly BNPL instalment (€, 0 if unused)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# SimPy cash-flow simulation
+# SimPy cash-flow simulation  (income only)
 # ──────────────────────────────────────────────────────────────────────────────
 
 class CashFlowSimulation:
     """
-    Discrete-event simulation of 6 months of personal cash flow.
-    Time unit = 1 day.  Two concurrent processes:
-      • income   – type-specific stochastic arrivals
-      • variable – Poisson variable spending events
-    Fixed costs and BNPL are applied post-simulation during aggregation.
+    Discrete-event simulation of 6 months of personal income.
+    Time unit = 1 day.  Income process is type-specific stochastic.
+    Fixed and variable expenses are computed analytically after the simulation.
     """
 
     def __init__(self, params: ProfileParams, rng: np.random.Generator):
         self.p   = params
         self.rng = rng
         self.env = simpy.Environment()
-        self.monthly_income:  List[float] = [0.0] * N_MONTHS
-        self.monthly_var_exp: List[float] = [0.0] * N_MONTHS
+        self.monthly_income: List[float] = [0.0] * N_MONTHS
 
     # ── Income processes ──────────────────────────────────────────────────────
 
@@ -125,7 +138,6 @@ class CashFlowSimulation:
             month_end   = month_start + MONTH_DAYS
 
             if self.rng.random() < GIG_ZERO_MONTH_PROB:
-                # Advance to end of this month and skip income
                 wait = month_end - self.env.now
                 if wait > 0:
                     yield self.env.timeout(wait)
@@ -146,7 +158,6 @@ class CashFlowSimulation:
                 ))
                 self.monthly_income[month_idx] += max(0.0, amount)
 
-            # Advance to end of month boundary
             remaining = month_end - self.env.now
             if remaining > 0:
                 yield self.env.timeout(remaining)
@@ -200,29 +211,9 @@ class CashFlowSimulation:
             m = min(int(self.env.now / MONTH_DAYS), N_MONTHS - 1)
             self.monthly_income[m] += amount
 
-    # ── Variable expense process ──────────────────────────────────────────────
-
-    def _variable_expenses(self, monthly_target: float):
-        """
-        Poisson variable purchases (food delivery, aperitivi, clothing…).
-        ~10 events/month (mean inter-arrival 3 days).
-        Amount ~ LogNormal calibrated to monthly_target.
-        """
-        mean_per_event = max(monthly_target / 10.0, 1.0)
-        while True:
-            yield self.env.timeout(self.rng.exponential(3.0))
-            if self.env.now >= SIM_DAYS:
-                break
-            m = min(int(self.env.now / MONTH_DAYS), N_MONTHS - 1)
-            amount = float(self.rng.lognormal(
-                mean=math.log(mean_per_event),
-                sigma=0.5,
-            ))
-            self.monthly_var_exp[m] += amount
-
     # ── Run ───────────────────────────────────────────────────────────────────
 
-    def run(self, monthly_var_target: float) -> None:
+    def run(self) -> None:
         income_proc = {
             'gig':        self._gig_income,
             'freelance':  self._freelance_income,
@@ -231,8 +222,177 @@ class CashFlowSimulation:
         }[self.p.working_category]
 
         self.env.process(income_proc())
-        self.env.process(self._variable_expenses(monthly_var_target))
         self.env.run(until=SIM_DAYS)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Expense generators
+# ──────────────────────────────────────────────────────────────────────────────
+
+def generate_fixed_exp_hist(base_fixed: float, rng: np.random.Generator) -> List[float]:
+    """
+    Generate 6-month history of fixed expenses.
+    Base value is constant; ~30% of profiles experience a step change
+    (e.g. new subscription) that increases costs from a random month onwards.
+
+    Args:
+        base_fixed: baseline monthly fixed cost (€250-550)
+        rng:        random generator
+
+    Returns:
+        List of 6 monthly fixed expense values (€)
+    """
+    hist = [base_fixed] * N_MONTHS
+
+    # 30% chance of step change
+    if rng.random() < 0.30:
+        step_month = int(rng.integers(1, N_MONTHS))   # change starts at month 1-5
+        step_size  = float(rng.uniform(30.0, 100.0))
+        for m in range(step_month, N_MONTHS):
+            hist[m] += step_size
+
+    return [round(v, 2) for v in hist]
+
+
+def generate_variable_exp_hist(
+    income_hist:      List[float],
+    working_category: str,
+    rng:              np.random.Generator,
+) -> List[float]:
+    """
+    Generate 6-month history of variable expenses with:
+      - baseline proportional to mean income (fraction depends on category)
+      - month-to-month noise (sigma = baseline × volatility_factor)
+      - weak income correlation: +15% of deviation from mean income
+
+    Clipped to [€100, €700] per month.
+
+    Args:
+        income_hist:      list of 6 monthly income values (€)
+        working_category: employment category
+        rng:              random generator
+
+    Returns:
+        List of 6 monthly variable expense values (€)
+    """
+    mean_income       = float(np.mean(income_hist))
+    fraction_lo, fraction_hi = TYPE_VAR_FRACTION_RANGE[working_category]
+    fraction          = float(rng.uniform(fraction_lo, fraction_hi))
+    baseline          = fraction * mean_income
+    volatility_factor = TYPE_VAR_VOLATILITY[working_category]
+    sigma             = baseline * volatility_factor
+
+    hist: List[float] = []
+    for t in range(N_MONTHS):
+        noise            = float(rng.normal(0.0, sigma))
+        correlation_term = 0.15 * (income_hist[t] - mean_income)
+        value            = baseline + noise + correlation_term
+        value            = float(np.clip(value, 100.0, 700.0))
+        hist.append(round(value, 2))
+
+    return hist
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Debt history generator  –  purchase-event simulation
+# ──────────────────────────────────────────────────────────────────────────────
+
+def generate_debt_hist_via_purchases(
+    bnpl_exposure:     float,
+    pay_on_time_bills: float,
+    working_category:  str,
+    rng:               np.random.Generator,
+) -> List[float]:
+    """
+    Simulate realistic BNPL debt history by modelling discrete purchase events
+    and monthly instalment repayments.
+
+    Non-users (bnpl_exposure == 0) return [0, 0, 0, 0, 0, 0].
+
+    For BNPL users:
+      1. Assign behavioural archetype (Accumulator / Moderate / Light).
+      2. Generate 1–4 purchase events, each with a purchase month (0–4),
+         amount (€80–400), and 3 or 4 instalments.
+      3. Simulate month-by-month debt: at purchase_month full amount is owed;
+         each subsequent month one instalment is repaid (Accumulators skip
+         a payment with probability 0.20).
+      4. debt_raw[t] = sum of remaining debt across all active purchases.
+      5. Ensure the last purchase falls in month 3 or 4 so debt_raw[5] > 0.
+      6. Scale the whole series so debt[5] == bnpl_exposure exactly.
+    """
+    if bnpl_exposure == 0.0:
+        return [0.0] * N_MONTHS
+
+    # ── Archetype assignment ───────────────────────────────────────────────────
+    if pay_on_time_bills < 0.5:
+        archetype  = 'accumulator'
+        skip_prob  = 0.20
+        n_purchases = int(rng.integers(2, 5))   # 2–4
+    elif pay_on_time_bills >= 0.8:
+        archetype  = 'light'
+        skip_prob  = 0.0
+        n_purchases = 1
+    else:
+        archetype  = 'moderate'
+        skip_prob  = 0.0
+        n_purchases = int(rng.integers(1, 3))   # 1–2
+
+    # Category nudge
+    if working_category == 'gig' and archetype != 'accumulator' and rng.random() < 0.25:
+        archetype  = 'accumulator'
+        skip_prob  = 0.20
+        n_purchases = max(n_purchases, 2)
+    elif working_category == 'fixed_term' and archetype == 'accumulator' and rng.random() < 0.20:
+        archetype  = 'moderate'
+        skip_prob  = 0.0
+
+    # ── Generate purchase months ───────────────────────────────────────────────
+    # All early purchases: months 0–4; the last one is forced to month 3–4
+    # so there is guaranteed remaining debt at month 5 (for calibration).
+    purchase_months: List[int] = []
+    for i in range(n_purchases):
+        if i == n_purchases - 1:
+            pm = int(rng.integers(3, 5))   # month 3 or 4
+        else:
+            pm = int(rng.integers(0, 5))   # month 0–4
+        purchase_months.append(pm)
+
+    # ── Simulate each purchase and accumulate debt ────────────────────────────
+    debt_raw = [0.0] * N_MONTHS
+
+    for pm in purchase_months:
+        amount = float(rng.uniform(80.0, 400.0))
+        n_inst = int(rng.choice([3, 4]))
+        rate   = amount / n_inst
+        remaining = amount
+
+        for t in range(N_MONTHS):
+            if t < pm:
+                continue
+            elif t == pm:
+                # Full amount owed at purchase month (no payment yet)
+                debt_raw[t] += remaining
+            else:
+                # Attempt to pay one instalment
+                if remaining > 0.0:
+                    if archetype == 'accumulator' and rng.random() < skip_prob:
+                        pass   # missed payment – debt unchanged
+                    else:
+                        remaining = max(0.0, remaining - rate)
+                debt_raw[t] += remaining
+
+    # ── Calibrate: scale so debt_raw[5] == bnpl_exposure ─────────────────────
+    if debt_raw[5] > 0.0:
+        scale    = bnpl_exposure / debt_raw[5]
+        debt_raw = [v * scale for v in debt_raw]
+    else:
+        # Fallback (should not happen with the forced late purchase)
+        debt_raw = [0.0] * (N_MONTHS - 1) + [bnpl_exposure]
+
+    # Force exact final constraint (floating-point guard)
+    debt_raw[-1] = bnpl_exposure
+
+    return [round(v, 2) for v in debt_raw]
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -253,7 +413,7 @@ def sample_profile_params(profile_id: int, rng: np.random.Generator) -> ProfileP
     base_income = float(rng.uniform(lo, hi))
     income_cv   = float(rng.uniform(*TYPE_CV_RANGE[cat]))
 
-    fixed_exp = float(rng.uniform(250.0, 550.0))
+    base_fixed_exp = float(rng.uniform(250.0, 550.0))
 
     # BNPL: more common among gig workers and age 22-26
     p_bnpl = 0.25
@@ -277,7 +437,7 @@ def sample_profile_params(profile_id: int, rng: np.random.Generator) -> ProfileP
         working_category=cat,
         base_income=base_income,
         income_cv=income_cv,
-        fixed_exp=fixed_exp,
+        base_fixed_exp=base_fixed_exp,
         initial_saving=initial_saving,
         bnpl_exposure=bnpl_exposure,
     )
@@ -347,14 +507,16 @@ def main() -> None:
     print("Simulating 6-month cash flows...")
 
     for i in range(N_PROFILES):
-        params             = sample_profile_params(profile_id=i, rng=rng)
-        monthly_var_target = float(rng.uniform(150.0, 500.0))
+        params = sample_profile_params(profile_id=i, rng=rng)
 
+        # ── Income simulation (SimPy) ────────────────────────────────────────
         sim = CashFlowSimulation(params=params, rng=rng)
-        sim.run(monthly_var_target=monthly_var_target)
-
+        sim.run()
         income_hist = [round(v, 2) for v in sim.monthly_income]
-        var_exp     = [round(v, 2) for v in sim.monthly_var_exp]
+
+        # ── Expense generation (analytical) ─────────────────────────────────
+        fixed_exp_hist    = generate_fixed_exp_hist(params.base_fixed_exp, rng)
+        variable_exp_hist = generate_variable_exp_hist(income_hist, params.working_category, rng)
 
         # ── Iterative saving balance ─────────────────────────────────────────
         saving_hist: List[float] = []
@@ -363,8 +525,8 @@ def main() -> None:
             balance = (
                 balance
                 + income_hist[m]
-                - params.fixed_exp
-                - var_exp[m]
+                - fixed_exp_hist[m]
+                - variable_exp_hist[m]
                 - params.bnpl_exposure
             )
             saving_hist.append(round(balance, 2))
@@ -380,16 +542,24 @@ def main() -> None:
             rng=rng,
         )
 
+        debt_hist = generate_debt_hist_via_purchases(
+            bnpl_exposure=params.bnpl_exposure,
+            pay_on_time_bills=pay_on_time,
+            working_category=params.working_category,
+            rng=rng,
+        )
+
         rows.append({
-            'id':                   i,
-            'monthly_income_hist':  json.dumps(income_hist),
-            'monthly_fixed_exp':    round(params.fixed_exp, 2),
-            'monthly_variable_exp': round(float(np.mean(var_exp)), 2),
-            'monthly_saving_hist':  json.dumps(saving_hist),
-            'working_category':     params.working_category,
-            'pay_on_time_bills':    round(pay_on_time, 4),
-            'int_defaults':         int_defaults,
-            'bnpl_exposure':        round(params.bnpl_exposure, 2),
+            'id':                        i,
+            'monthly_income_hist':       json.dumps(income_hist),
+            'monthly_fixed_exp_hist':    json.dumps(fixed_exp_hist),
+            'monthly_variable_exp_hist': json.dumps(variable_exp_hist),
+            'monthly_saving_hist':       json.dumps(saving_hist),
+            'debt_hist':                 json.dumps(debt_hist),
+            'working_category':          params.working_category,
+            'pay_on_time_bills':         round(pay_on_time, 4),
+            'int_defaults':              int_defaults,
+            'bnpl_exposure':             round(params.bnpl_exposure, 2),
         })
 
         if (i + 1) % 100 == 0:
@@ -417,10 +587,26 @@ def main() -> None:
         mi = incomes[mask].mean()
         print(f"    {cat:<12}  EUR {mi:.0f}/month")
 
+    print("\n  Mean expenses per category (mean fixed | mean variable):")
+    fixed_means    = df['monthly_fixed_exp_hist'].apply(lambda s: float(np.mean(json.loads(s))))
+    variable_means = df['monthly_variable_exp_hist'].apply(lambda s: float(np.mean(json.loads(s))))
+    for cat in EMPLOYMENT_TYPES:
+        mask = df['working_category'] == cat
+        mf = fixed_means[mask].mean()
+        mv = variable_means[mask].mean()
+        mi = incomes[mask].mean()
+        print(f"    {cat:<12}  fixed EUR {mf:.0f}  variable EUR {mv:.0f}  "
+              f"(fixed={100*mf/mi:.0f}% | var={100*mv/mi:.0f}% of income)")
+
+    n_step = df['monthly_fixed_exp_hist'].apply(
+        lambda s: len(set(json.loads(s))) > 1
+    ).sum()
+    print(f"\n  Profiles with fixed-cost step change: {n_step} ({100*n_step/len(df):.1f}%)")
+
     n_neg = df['monthly_saving_hist'].apply(
         lambda s: any(v < 0 for v in json.loads(s))
     ).sum()
-    print(f"\n  Profiles with any negative saving balance: {n_neg} ({100*n_neg/len(df):.1f}%)")
+    print(f"  Profiles with any negative saving balance: {n_neg} ({100*n_neg/len(df):.1f}%)")
 
     print("\n  int_defaults distribution (response variable):")
     for v in [0, 1, 2]:
@@ -432,6 +618,22 @@ def main() -> None:
     print(f"\n  BNPL users: {int((df['bnpl_exposure'] > 0).sum())} / {len(df)}")
     print(f"  Mean BNPL (when active): "
           f"EUR {df.loc[df['bnpl_exposure'] > 0, 'bnpl_exposure'].mean():.0f}/month")
+
+    print("\n  Debt trajectory patterns (BNPL users only, first 10 examples):")
+    bnpl_df = df[df['bnpl_exposure'] > 0].head(10)
+    for _, row in bnpl_df.iterrows():
+        debt_vals = json.loads(row['debt_hist'])
+        max_debt  = max(debt_vals)
+        peak_month = int(np.argmax(debt_vals))
+        final_debt = debt_vals[-1]
+        if peak_month < 5:
+            trend = "repaying" if final_debt < max_debt else "recovering"
+        else:
+            trend = "growing"
+        vals_str = "[" + ", ".join(f"{v:.0f}" for v in debt_vals) + "]"
+        print(f"    ID {int(row['id']):<4}: debt={vals_str}  "
+              f"max=€{max_debt:.0f} @month_{peak_month}  "
+              f"final=€{final_debt:.0f}  ({trend})")
 
     print(f"\n  Saved -> data/profiles.csv")
     print(f"{'='*55}\n")

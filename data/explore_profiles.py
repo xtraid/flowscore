@@ -2,7 +2,7 @@
 data/explore_profiles.py
 =========================
 Statistical exploration of data/profiles.csv.
-Produces a single figure with 9 panels covering all columns.
+Produces a single figure with 10 panels covering all columns.
 
 Run
 ---
@@ -24,8 +24,10 @@ df["income_mean"]  = df["monthly_income_hist"].apply(lambda s: np.mean(json.load
 df["income_cv"]    = df["monthly_income_hist"].apply(
     lambda s: np.std(json.loads(s)) / max(np.mean(json.loads(s)), 1)
 )
-df["saving_final"] = df["monthly_saving_hist"].apply(lambda s: json.loads(s)[-1])
-df["saving_min"]   = df["monthly_saving_hist"].apply(lambda s: min(json.loads(s)))
+df["fixed_mean"]    = df["monthly_fixed_exp_hist"].apply(lambda s: np.mean(json.loads(s)))
+df["variable_mean"] = df["monthly_variable_exp_hist"].apply(lambda s: np.mean(json.loads(s)))
+df["saving_final"]  = df["monthly_saving_hist"].apply(lambda s: json.loads(s)[-1])
+df["saving_min"]    = df["monthly_saving_hist"].apply(lambda s: min(json.loads(s)))
 df["ever_negative"] = df["saving_min"] < 0
 
 CAT_ORDER  = ["gig", "part_time", "freelance", "fixed_term"]
@@ -34,16 +36,23 @@ CAT_COLORS = {"gig": "#e05c5c", "part_time": "#5c8fe0",
 palette    = [CAT_COLORS[c] for c in CAT_ORDER]
 
 # ── Figure layout ─────────────────────────────────────────────────────────────
-fig = plt.figure(figsize=(17, 13))
+fig = plt.figure(figsize=(17, 23))
 fig.suptitle("FlowScore – Synthetic Dataset Exploration  (N=500)",
-             fontsize=15, fontweight="bold", y=0.98)
+             fontsize=15, fontweight="bold", y=0.99)
 
-gs = gridspec.GridSpec(3, 3, figure=fig, hspace=0.45, wspace=0.38)
+gs = gridspec.GridSpec(5, 3, figure=fig, hspace=0.50, wspace=0.38)
 
-axes = [fig.add_subplot(gs[r, c]) for r in range(3) for c in range(3)]
-(ax1, ax2, ax3,
- ax4, ax5, ax6,
- ax7, ax8, ax9) = axes
+ax1  = fig.add_subplot(gs[0, 0])
+ax2  = fig.add_subplot(gs[0, 1])
+ax3  = fig.add_subplot(gs[0, 2])
+ax4  = fig.add_subplot(gs[1, 0])
+ax5  = fig.add_subplot(gs[1, 1])
+ax6  = fig.add_subplot(gs[1, 2])
+ax7  = fig.add_subplot(gs[2, 0])
+ax8  = fig.add_subplot(gs[2, 1])
+ax9  = fig.add_subplot(gs[2, 2])
+ax10 = fig.add_subplot(gs[3, :])   # full-width expense-evolution panel
+ax11 = fig.add_subplot(gs[4, :])   # full-width debt trajectory panel
 
 
 # ── 1. Working category distribution ─────────────────────────────────────────
@@ -104,7 +113,6 @@ def_by_cat = (
     .unstack(fill_value=0)
     .reindex(CAT_ORDER)
 )
-# Normalise to percentage
 def_pct = def_by_cat.div(def_by_cat.sum(axis=1), axis=0) * 100
 bottom = np.zeros(len(CAT_ORDER))
 colors_stack = ["#5cb87a", "#e0b25c", "#e05c5c"]
@@ -125,15 +133,15 @@ ax5.set_ylim(0, 108)
 ax5.tick_params(axis="x", labelsize=8)
 
 
-# ── 6. Fixed vs variable expenses scatter ────────────────────────────────────
+# ── 6. Fixed vs variable expenses scatter (using per-profile means) ───────────
 for cat in CAT_ORDER:
     mask = df["working_category"] == cat
-    ax6.scatter(df.loc[mask, "monthly_fixed_exp"],
-                df.loc[mask, "monthly_variable_exp"],
+    ax6.scatter(df.loc[mask, "fixed_mean"],
+                df.loc[mask, "variable_mean"],
                 c=CAT_COLORS[cat], alpha=0.45, s=18, label=cat)
-ax6.set_title("Fixed vs variable expenses")
-ax6.set_xlabel("Fixed exp (EUR/month)")
-ax6.set_ylabel("Variable exp (EUR/month)")
+ax6.set_title("Fixed vs variable expenses (6-month mean)")
+ax6.set_xlabel("Mean fixed exp (EUR/month)")
+ax6.set_ylabel("Mean variable exp (EUR/month)")
 ax6.legend(fontsize=7, markerscale=1.5)
 
 
@@ -181,6 +189,66 @@ mu = df["pay_on_time_bills"].mean()
 ax9.axvline(mu, color="crimson", linewidth=1.4, linestyle="--",
             label=f"Mean = {mu:.2f}")
 ax9.legend(fontsize=8)
+
+
+# ── 10. Expense evolution over time (median fixed & variable per category) ────
+months_labels = [f"M{m}" for m in range(6)]
+for cat, color in zip(CAT_ORDER, palette):
+    mask = df["working_category"] == cat
+
+    fixed_histories = np.array(
+        df.loc[mask, "monthly_fixed_exp_hist"].apply(json.loads).tolist()
+    )
+    var_histories = np.array(
+        df.loc[mask, "monthly_variable_exp_hist"].apply(json.loads).tolist()
+    )
+
+    med_fixed = np.median(fixed_histories, axis=0)
+    med_var   = np.median(var_histories,   axis=0)
+
+    ax10.plot(months, med_fixed, color=color, linewidth=2,
+              linestyle="-",  label=f"{cat} fixed")
+    ax10.plot(months, med_var,   color=color, linewidth=1.5,
+              linestyle="--", label=f"{cat} variable")
+
+ax10.set_title("Expense evolution over time (median per category)  — solid=fixed, dashed=variable")
+ax10.set_xlabel("Month")
+ax10.set_ylabel("EUR / month")
+ax10.set_xticks(months)
+ax10.set_xticklabels(months_labels)
+ax10.legend(fontsize=7, ncol=4, loc="upper right")
+ax10.axhline(0, color="black", linewidth=0.6, linestyle=":")
+
+
+# ── 11. Debt trajectory (BNPL users only, median ± IQR per category) ─────────
+bnpl_df = df[df["bnpl_exposure"] > 0]   # exclude non-BNPL users
+for cat, color in zip(CAT_ORDER, palette):
+    mask = bnpl_df["working_category"] == cat
+    if mask.sum() == 0:
+        continue
+    histories = np.array(
+        bnpl_df.loc[mask, "debt_hist"].apply(json.loads).tolist()
+    )
+    med = np.median(histories, axis=0)
+    q25 = np.percentile(histories, 25, axis=0)
+    q75 = np.percentile(histories, 75, axis=0)
+    n   = mask.sum()
+    ax11.plot(months, med, color=color, linewidth=2, label=f"{cat} (n={n})")
+    ax11.fill_between(months, q25, q75, color=color, alpha=0.15)
+
+    # Vertical dashed line at mean peak month for this category
+    peak_months = np.argmax(histories, axis=1)   # peak month for each profile
+    mean_peak   = float(np.mean(peak_months))
+    ax11.axvline(mean_peak, color=color, linewidth=1.0, linestyle=":",
+                 alpha=0.7, label=f"{cat} avg peak @ m{mean_peak:.1f}")
+
+ax11.axhline(0, color="black", linewidth=0.8, linestyle="--")
+ax11.set_title("Debt trajectory (BNPL users only, median ± IQR)  — dotted = mean peak month per category")
+ax11.set_xlabel("Month")
+ax11.set_ylabel("Debt balance (EUR)")
+ax11.set_xticks(months)
+ax11.legend(fontsize=7, ncol=4, loc="upper left")
+
 
 # ── Save & show ───────────────────────────────────────────────────────────────
 plt.savefig("data/profiles_stats.png", dpi=150, bbox_inches="tight")
