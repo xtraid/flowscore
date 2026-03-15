@@ -2,6 +2,7 @@ from scipy.integrate import solve_ivp
 import numpy as np
 import pandas as pd
 import ast
+import matplotlib.pyplot as pl
 
 
 def parse_hist(hist_str):
@@ -121,22 +122,21 @@ def simulate_profile(profile_id, features, shock_scenario):
     shock_start=shock_scenario['start']
     shock_end=shock_scenario['end']
 
-    # integriamo con l'ODE
-    y0=[debt_0,income_mean]
+    
+    
+    debt_trajectory = example([0,1000,1200,1100,1000,1200],400,60,[0,0,0,0,0,0],8,0.5)
+    
 
-    t_eval = np.linspace(0,T_MAX,N_STEPS)
-    sol = solve_ivp(fun = lambda t, y : ode_system(t, y, expenses, INTEREST_RATE, shock_intensity, shock_start, shock_end, income_mean),
-                    t_span= (0,T_MAX),y0= y0,t_eval=t_eval, method='RK45', rtol=1e-6, atol=1e-8,)
-    debt_trajectory = sol.y[0]
+    
     max_debt = np.max(debt_trajectory)
     fragility_index = max_debt / income_mean
     final_debt = debt_trajectory[-1]
     convergences = final_debt<max_debt*0.9
-    num_points = len(t_eval)
+    num_points = 12
     return pd.DataFrame({
         'profile_id': [profile_id] * num_points,
         'scenario': [shock_scenario['name']] * num_points,
-        't': t_eval,
+        't': range(12),
         'debt': debt_trajectory,
         'max_debt': [max_debt] * num_points,
         'final_debt': [final_debt] * num_points,
@@ -183,6 +183,42 @@ def run_simulation(df_processed):
     return df_final
 
 
+
+
+
+
+
+
+def example(income_hist, exp_mean, std_exp, debt_hist, t_lost, etha):
+    salario = income_hist[-1]
+    initial_debt = debt_hist[-1]
+    
+    # Crea array di 12 mesi: salario fino a t_lost, poi 0
+    pred_income = np.array([salario if i < t_lost else 0.0 for i in range(12)])
+    pred_exp = np.random.normal(loc=exp_mean, scale=std_exp, size=12)
+    
+    debt = np.zeros(12)
+    debt[0] = initial_debt
+
+    for i in range(1, 12):
+        
+        difference = pred_exp[i] - pred_income[i]
+        if difference > 0:
+            debt[i] = debt[i-1] + difference  # ← aggiungi anche debt precedente
+        else:
+            debt[i] = debt[i-1] + etha * difference
+            if debt[i] < 0: 
+                debt[i]=0
+                break
+    
+    return debt
+    
+
+
+
+
+
+
 def main():
     df = read_data('data/profiles.csv')
     print("=== Dati caricati ===")
@@ -202,4 +238,10 @@ def main():
     print("\n✓ FATTO! CSV pronto per Chris (Layer 3)")
 
 
-main()
+# main()
+
+
+debt_trajectory = example([0,1000,1200,1100,1000,1200],400,60,[0,0,0,0,0,2000],4,0.5)
+pl.figure()
+pl.plot(range(12), debt_trajectory)
+pl.show()
