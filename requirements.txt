@@ -10,6 +10,8 @@ pandas==3.0.1
 pillow==12.1.1
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
+dash==4.0.0
+plotly==6.6.0
 scipy==1.17.1
 seaborn==0.13.2
 simpy==4.1.1

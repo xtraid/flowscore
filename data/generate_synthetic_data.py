@@ -580,6 +580,10 @@ def main() -> None:
         else:
             debt_hist = [0.0] * (N_MONTHS - 1) + [round(params.bnpl_exposure, 2)]
 
+        # Debito richiesto: chi² con df=3, scale=300, location=200
+        # → picco a €500, minimo €200, coda fino a ~€7000 (99.99° perc.)
+        debito_richiesto = round(200.0 + float(rng.chisquare(3)) * 300.0, 2)
+
         rows.append({
             'id':                        i,
             'monthly_income_hist':       json.dumps(income_hist),
@@ -591,6 +595,7 @@ def main() -> None:
             'pay_on_time_bills':         round(pay_on_time, 4),
             'int_defaults':              int_defaults,
             'bnpl_exposure':             round(params.bnpl_exposure, 2),
+            'debito_richiesto':          debito_richiesto,
         })
 
         if (i + 1) % 100 == 0:
