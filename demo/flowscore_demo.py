@@ -8,7 +8,26 @@ from dash import Dash, dcc, html, Input, Output
 scores = pd.read_csv('model/scores_output.csv')
 sim    = pd.read_csv('simulation/simulation_output.csv')
 
-SCENARIO_COLORS = {'lieve': '#2196F3', 'medio': '#FF9800', 'grave': '#F44336'}
+SCENARIO_COLORS = {
+    'best_case': '#4CAF50',   # verde — nessuno shock
+    'lieve':     '#2196F3',   # blu
+    'medio':     '#FF9800',   # arancio
+    'grave':     '#F44336',   # rosso
+}
+
+SCENARIO_STYLE = {
+    'best_case': {'dash': 'dash',  'width': 2},
+    'lieve':     {'dash': 'solid', 'width': 2},
+    'medio':     {'dash': 'solid', 'width': 2},
+    'grave':     {'dash': 'solid', 'width': 2},
+}
+
+SCENARIO_LABELS = {
+    'best_case': 'Best case (nessuno shock)',
+    'lieve':     'Lieve (−20%, 2 mesi)',
+    'medio':     'Medio (−40%, 4 mesi)',
+    'grave':     'Grave (−60%, 6 mesi)',
+}
 ALL_IDS = sorted(sim['profile_id'].unique())
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -114,12 +133,14 @@ def update(profile_id):
     # ── Traiettorie debito ────────────────────────────────────────────────────
     for scenario, color in SCENARIO_COLORS.items():
         s = sim_p[sim_p['scenario'] == scenario]
+        style = SCENARIO_STYLE[scenario]
         fig.add_trace(go.Scatter(
             x=s['t'], y=s['debt'],
             mode='lines+markers',
-            name=scenario.capitalize(),
-            line={'color': color, 'width': 2},
-            marker={'size': 5},
+            name=SCENARIO_LABELS[scenario],
+            line={'color': color, 'width': style['width'], 'dash': style['dash']},
+            marker={'size': 5 if scenario != 'best_case' else 6,
+                    'symbol': 'circle' if scenario != 'best_case' else 'diamond'},
             legendgroup=scenario,
         ), row=1, col=2)
 
@@ -144,7 +165,7 @@ def update(profile_id):
             x=merged['flowscore'], y=merged['fragility_index'],
             mode='markers',
             marker={'color': color, 'size': 4, 'opacity': 0.4},
-            name=scenario.capitalize(),
+            name=SCENARIO_LABELS[scenario],
             legendgroup=scenario,
             showlegend=False,
         ), row=2, col=2)
@@ -169,9 +190,9 @@ def update(profile_id):
         if len(row_s):
             perc = row_s['perc_debito_finale'].values[0] * 100
             fig.add_trace(go.Bar(
-                x=[scenario.capitalize()],
+                x=[SCENARIO_LABELS[scenario]],
                 y=[perc],
-                name=scenario.capitalize(),
+                name=SCENARIO_LABELS[scenario],
                 marker_color=color,
                 text=[f'{perc:.1f}%'],
                 textposition='outside',
@@ -193,7 +214,7 @@ def update(profile_id):
     fig.update_xaxes(title_text='Scenario', row=3, col=1)
     fig.update_yaxes(title_text='% Debito finale / Richiesto', row=3, col=1)
     fig.add_trace(go.Scatter(
-        x=['Lieve', 'Medio', 'Grave'], y=[100, 100, 100],
+        x=list(SCENARIO_LABELS.values()), y=[100] * len(SCENARIO_LABELS),
         mode='lines', line={'dash': 'dash', 'color': 'gray', 'width': 1},
         showlegend=False, hoverinfo='skip',
     ), row=3, col=1)

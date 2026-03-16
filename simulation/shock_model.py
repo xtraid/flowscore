@@ -163,9 +163,10 @@ def simulate_profile(profile_id, features, shock_scenario):
 def run_simulation(df_processed):
     """Simula tutti i profili con tutti gli scenari"""
     scenarios = [
-        {'name': 'lieve', 'intensity': 0.20, 'start': 2, 'end': 4},
-        {'name': 'medio', 'intensity': 0.40, 'start': 2, 'end': 6},
-        {'name': 'grave', 'intensity': 0.60, 'start': 2, 'end': 8}
+        {'name': 'best_case', 'intensity': 0.00, 'start': 12, 'end': 12},  # nessuno shock
+        {'name': 'lieve',     'intensity': 0.20, 'start': 2,  'end': 4 },
+        {'name': 'medio',     'intensity': 0.40, 'start': 2,  'end': 6 },
+        {'name': 'grave',     'intensity': 0.60, 'start': 2,  'end': 8 },
     ]
 
     print(f"\n=== Simulazione shock ===")

@@ -7,95 +7,107 @@ Scenario analizzato: MEDIO  |  Soglie usate:
 
 ─────────────────────────────────────────────────────────────────
 GRUPPO A — Tutti i profili con perc_debito_finale >= 500% (scenario medio)
-  (40 profili)
+  (51 profili)
 ─────────────────────────────────────────────────────────────────
-  Profilo 50    |  FlowScore: 93.3  |  debito_richiesto: €260  |  final_debt: €6871  |  perc_finale: 2640.0%  |  fragility: 20.62
-  Profilo 304   |  FlowScore: 82.3  |  debito_richiesto: €326  |  final_debt: €6503  |  perc_finale: 1992.6%  |  fragility: 22.81
-  Profilo 460   |  FlowScore: 96.0  |  debito_richiesto: €364  |  final_debt: €5187  |  perc_finale: 1425.1%  |  fragility: 7.44
-  Profilo 179   |  FlowScore: 70.3  |  debito_richiesto: €477  |  final_debt: €5798  |  perc_finale: 1216.6%  |  fragility: 27.93
-  Profilo 379   |  FlowScore: 88.5  |  debito_richiesto: €323  |  final_debt: €3125  |  perc_finale: 969.0%  |  fragility: 4.60
-  Profilo 491   |  FlowScore: 74.3  |  debito_richiesto: €327  |  final_debt: €3033  |  perc_finale: 926.7%  |  fragility: 5.02
-  Profilo 434   |  FlowScore: 74.0  |  debito_richiesto: €416  |  final_debt: €3755  |  perc_finale: 903.0%  |  fragility: 7.05
-  Profilo 293   |  FlowScore: 3.4  |  debito_richiesto: €355  |  final_debt: €3096  |  perc_finale: 872.2%  |  fragility: 4.32
-  Profilo 396   |  FlowScore: 91.2  |  debito_richiesto: €503  |  final_debt: €4348  |  perc_finale: 864.2%  |  fragility: 12.31
-  Profilo 228   |  FlowScore: 51.4  |  debito_richiesto: €323  |  final_debt: €2699  |  perc_finale: 834.7%  |  fragility: 2.84
-  Profilo 1     |  FlowScore: 86.0  |  debito_richiesto: €850  |  final_debt: €6727  |  perc_finale: 791.8%  |  fragility: 33.57
-  Profilo 55    |  FlowScore: 2.0  |  debito_richiesto: €606  |  final_debt: €4703  |  perc_finale: 775.6%  |  fragility: 12.14
-  Profilo 326   |  FlowScore: 92.8  |  debito_richiesto: €445  |  final_debt: €3435  |  perc_finale: 772.0%  |  fragility: 5.42
-  Profilo 58    |  FlowScore: 81.7  |  debito_richiesto: €367  |  final_debt: €2696  |  perc_finale: 734.0%  |  fragility: 5.87
-  Profilo 323   |  FlowScore: 92.2  |  debito_richiesto: €292  |  final_debt: €2123  |  perc_finale: 727.7%  |  fragility: 3.93
-  Profilo 320   |  FlowScore: 72.3  |  debito_richiesto: €436  |  final_debt: €3136  |  perc_finale: 719.6%  |  fragility: 5.13
-  Profilo 32    |  FlowScore: 88.1  |  debito_richiesto: €427  |  final_debt: €3074  |  perc_finale: 719.3%  |  fragility: 6.86
-  Profilo 318   |  FlowScore: 98.5  |  debito_richiesto: €317  |  final_debt: €2276  |  perc_finale: 717.3%  |  fragility: 2.98
-  Profilo 107   |  FlowScore: 70.8  |  debito_richiesto: €301  |  final_debt: €2121  |  perc_finale: 704.7%  |  fragility: 3.07
-  Profilo 356   |  FlowScore: 54.0  |  debito_richiesto: €906  |  final_debt: €5926  |  perc_finale: 654.0%  |  fragility: 14.39
-  Profilo 343   |  FlowScore: 92.6  |  debito_richiesto: €536  |  final_debt: €3469  |  perc_finale: 646.7%  |  fragility: 6.86
-  Profilo 386   |  FlowScore: 96.3  |  debito_richiesto: €919  |  final_debt: €5833  |  perc_finale: 634.9%  |  fragility: 7.86
-  Profilo 202   |  FlowScore: 98.0  |  debito_richiesto: €598  |  final_debt: €3783  |  perc_finale: 632.9%  |  fragility: 5.21
-  Profilo 36    |  FlowScore: 91.1  |  debito_richiesto: €391  |  final_debt: €2468  |  perc_finale: 630.5%  |  fragility: 3.75
-  Profilo 156   |  FlowScore: 97.7  |  debito_richiesto: €380  |  final_debt: €2370  |  perc_finale: 623.2%  |  fragility: 3.72
-  Profilo 216   |  FlowScore: 94.2  |  debito_richiesto: €754  |  final_debt: €4673  |  perc_finale: 620.1%  |  fragility: 11.45
-  Profilo 155   |  FlowScore: 52.4  |  debito_richiesto: €666  |  final_debt: €4087  |  perc_finale: 613.8%  |  fragility: 9.15
-  Profilo 361   |  FlowScore: 85.4  |  debito_richiesto: €634  |  final_debt: €3877  |  perc_finale: 611.1%  |  fragility: 8.32
-  Profilo 116   |  FlowScore: 97.4  |  debito_richiesto: €625  |  final_debt: €3791  |  perc_finale: 606.3%  |  fragility: 12.21
-  Profilo 181   |  FlowScore: 62.9  |  debito_richiesto: €687  |  final_debt: €4142  |  perc_finale: 603.1%  |  fragility: 9.31
-  Profilo 119   |  FlowScore: 94.6  |  debito_richiesto: €353  |  final_debt: €2079  |  perc_finale: 589.4%  |  fragility: 3.05
-  Profilo 405   |  FlowScore: 97.6  |  debito_richiesto: €759  |  final_debt: €4432  |  perc_finale: 584.2%  |  fragility: 9.61
-  Profilo 193   |  FlowScore: 98.3  |  debito_richiesto: €423  |  final_debt: €2442  |  perc_finale: 576.8%  |  fragility: 4.15
-  Profilo 329   |  FlowScore: 90.7  |  debito_richiesto: €320  |  final_debt: €1790  |  perc_finale: 560.0%  |  fragility: 2.18
-  Profilo 451   |  FlowScore: 38.3  |  debito_richiesto: €700  |  final_debt: €3811  |  perc_finale: 544.6%  |  fragility: 3.81
-  Profilo 23    |  FlowScore: 84.1  |  debito_richiesto: €210  |  final_debt: €1118  |  perc_finale: 532.0%  |  fragility: 2.48
-  Profilo 402   |  FlowScore: 86.6  |  debito_richiesto: €560  |  final_debt: €2924  |  perc_finale: 522.3%  |  fragility: 5.08
-  Profilo 186   |  FlowScore: 94.9  |  debito_richiesto: €485  |  final_debt: €2531  |  perc_finale: 521.5%  |  fragility: 3.39
-  Profilo 387   |  FlowScore: 95.0  |  debito_richiesto: €1047  |  final_debt: €5450  |  perc_finale: 520.5%  |  fragility: 11.91
-  Profilo 184   |  FlowScore: 96.1  |  debito_richiesto: €508  |  final_debt: €2551  |  perc_finale: 501.7%  |  fragility: 3.10
+  Profilo 50    |  FlowScore: 93.3  |  debito_richiesto: €260  |  final_debt: €7746  |  perc_finale: 2976.1%  |  fragility: 23.82
+  Profilo 304   |  FlowScore: 82.3  |  debito_richiesto: €326  |  final_debt: €4845  |  perc_finale: 1484.5%  |  fragility: 16.99
+  Profilo 343   |  FlowScore: 92.6  |  debito_richiesto: €536  |  final_debt: €7117  |  perc_finale: 1327.0%  |  fragility: 14.07
+  Profilo 120   |  FlowScore: 81.8  |  debito_richiesto: €414  |  final_debt: €5463  |  perc_finale: 1320.6%  |  fragility: 6.01
+  Profilo 88    |  FlowScore: 98.6  |  debito_richiesto: €518  |  final_debt: €6626  |  perc_finale: 1278.5%  |  fragility: 7.58
+  Profilo 1     |  FlowScore: 86.0  |  debito_richiesto: €850  |  final_debt: €10584  |  perc_finale: 1245.7%  |  fragility: 52.82
+  Profilo 318   |  FlowScore: 98.5  |  debito_richiesto: €317  |  final_debt: €3907  |  perc_finale: 1231.6%  |  fragility: 5.57
+  Profilo 379   |  FlowScore: 88.5  |  debito_richiesto: €323  |  final_debt: €3595  |  perc_finale: 1114.7%  |  fragility: 5.29
+  Profilo 460   |  FlowScore: 96.0  |  debito_richiesto: €364  |  final_debt: €4018  |  perc_finale: 1103.9%  |  fragility: 5.76
+  Profilo 32    |  FlowScore: 88.1  |  debito_richiesto: €427  |  final_debt: €4606  |  perc_finale: 1077.6%  |  fragility: 9.88
+  Profilo 155   |  FlowScore: 52.4  |  debito_richiesto: €666  |  final_debt: €6504  |  perc_finale: 977.0%  |  fragility: 14.57
+  Profilo 370   |  FlowScore: 97.8  |  debito_richiesto: €423  |  final_debt: €4025  |  perc_finale: 952.3%  |  fragility: 5.03
+  Profilo 320   |  FlowScore: 72.3  |  debito_richiesto: €436  |  final_debt: €4075  |  perc_finale: 934.9%  |  fragility: 6.66
+  Profilo 491   |  FlowScore: 74.3  |  debito_richiesto: €327  |  final_debt: €3050  |  perc_finale: 931.7%  |  fragility: 5.12
+  Profilo 396   |  FlowScore: 91.2  |  debito_richiesto: €503  |  final_debt: €4437  |  perc_finale: 882.0%  |  fragility: 12.56
+  Profilo 228   |  FlowScore: 51.4  |  debito_richiesto: €323  |  final_debt: €2731  |  perc_finale: 844.8%  |  fragility: 2.88
+  Profilo 55    |  FlowScore: 2.0  |  debito_richiesto: €606  |  final_debt: €4803  |  perc_finale: 792.1%  |  fragility: 12.40
+  Profilo 116   |  FlowScore: 97.4  |  debito_richiesto: €625  |  final_debt: €4702  |  perc_finale: 751.9%  |  fragility: 14.92
+  Profilo 193   |  FlowScore: 98.3  |  debito_richiesto: €423  |  final_debt: €3137  |  perc_finale: 741.1%  |  fragility: 5.64
+  Profilo 126   |  FlowScore: 87.8  |  debito_richiesto: €869  |  final_debt: €6437  |  perc_finale: 741.0%  |  fragility: 11.34
+  Profilo 326   |  FlowScore: 92.8  |  debito_richiesto: €445  |  final_debt: €3294  |  perc_finale: 740.2%  |  fragility: 4.86
+  Profilo 107   |  FlowScore: 70.8  |  debito_richiesto: €301  |  final_debt: €2064  |  perc_finale: 685.9%  |  fragility: 2.99
+  Profilo 361   |  FlowScore: 85.4  |  debito_richiesto: €634  |  final_debt: €4310  |  perc_finale: 679.4%  |  fragility: 9.25
+  Profilo 434   |  FlowScore: 74.0  |  debito_richiesto: €416  |  final_debt: €2772  |  perc_finale: 666.5%  |  fragility: 6.02
+  Profilo 58    |  FlowScore: 81.7  |  debito_richiesto: €367  |  final_debt: €2447  |  perc_finale: 666.4%  |  fragility: 4.30
+  Profilo 91    |  FlowScore: 97.9  |  debito_richiesto: €558  |  final_debt: €3716  |  perc_finale: 665.9%  |  fragility: 8.49
+  Profilo 36    |  FlowScore: 91.1  |  debito_richiesto: €391  |  final_debt: €2603  |  perc_finale: 665.0%  |  fragility: 3.95
+  Profilo 179   |  FlowScore: 70.3  |  debito_richiesto: €477  |  final_debt: €3167  |  perc_finale: 664.5%  |  fragility: 14.62
+  Profilo 177   |  FlowScore: 91.9  |  debito_richiesto: €1181  |  final_debt: €7820  |  perc_finale: 662.4%  |  fragility: 23.49
+  Profilo 323   |  FlowScore: 92.2  |  debito_richiesto: €292  |  final_debt: €1863  |  perc_finale: 638.3%  |  fragility: 3.41
+  Profilo 119   |  FlowScore: 94.6  |  debito_richiesto: €353  |  final_debt: €2218  |  perc_finale: 628.8%  |  fragility: 3.28
+  Profilo 202   |  FlowScore: 98.0  |  debito_richiesto: €598  |  final_debt: €3756  |  perc_finale: 628.3%  |  fragility: 5.70
+  Profilo 18    |  FlowScore: 69.1  |  debito_richiesto: €429  |  final_debt: €2687  |  perc_finale: 626.6%  |  fragility: 2.69
+  Profilo 223   |  FlowScore: 96.3  |  debito_richiesto: €549  |  final_debt: €3336  |  perc_finale: 607.4%  |  fragility: 5.87
+  Profilo 190   |  FlowScore: 96.1  |  debito_richiesto: €736  |  final_debt: €4463  |  perc_finale: 606.1%  |  fragility: 7.63
+  Profilo 27    |  FlowScore: 94.6  |  debito_richiesto: €549  |  final_debt: €3285  |  perc_finale: 598.9%  |  fragility: 5.17
+  Profilo 236   |  FlowScore: 95.6  |  debito_richiesto: €401  |  final_debt: €2398  |  perc_finale: 598.3%  |  fragility: 3.05
+  Profilo 405   |  FlowScore: 97.6  |  debito_richiesto: €759  |  final_debt: €4462  |  perc_finale: 588.0%  |  fragility: 9.67
+  Profilo 329   |  FlowScore: 90.7  |  debito_richiesto: €320  |  final_debt: €1867  |  perc_finale: 584.1%  |  fragility: 2.27
+  Profilo 51    |  FlowScore: 90.7  |  debito_richiesto: €585  |  final_debt: €3324  |  perc_finale: 568.0%  |  fragility: 4.98
+  Profilo 314   |  FlowScore: 97.6  |  debito_richiesto: €597  |  final_debt: €3364  |  perc_finale: 563.4%  |  fragility: 5.49
+  Profilo 293   |  FlowScore: 3.4  |  debito_richiesto: €355  |  final_debt: €1992  |  perc_finale: 561.2%  |  fragility: 2.78
+  Profilo 356   |  FlowScore: 54.0  |  debito_richiesto: €906  |  final_debt: €4942  |  perc_finale: 545.4%  |  fragility: 12.00
+  Profilo 186   |  FlowScore: 94.9  |  debito_richiesto: €485  |  final_debt: €2627  |  perc_finale: 541.3%  |  fragility: 3.52
+  Profilo 413   |  FlowScore: 96.9  |  debito_richiesto: €501  |  final_debt: €2598  |  perc_finale: 518.9%  |  fragility: 4.00
+  Profilo 37    |  FlowScore: 94.8  |  debito_richiesto: €556  |  final_debt: €2884  |  perc_finale: 518.8%  |  fragility: 7.42
+  Profilo 291   |  FlowScore: 71.5  |  debito_richiesto: €752  |  final_debt: €3864  |  perc_finale: 513.7%  |  fragility: 5.57
+  Profilo 134   |  FlowScore: 77.1  |  debito_richiesto: €634  |  final_debt: €3248  |  perc_finale: 512.3%  |  fragility: 5.55
+  Profilo 46    |  FlowScore: 94.7  |  debito_richiesto: €928  |  final_debt: €4734  |  perc_finale: 510.1%  |  fragility: 6.74
+  Profilo 262   |  FlowScore: 88.9  |  debito_richiesto: €366  |  final_debt: €1856  |  perc_finale: 506.9%  |  fragility: 1.93
+  Profilo 402   |  FlowScore: 86.6  |  debito_richiesto: €560  |  final_debt: €2816  |  perc_finale: 503.1%  |  fragility: 4.89
 
 ─────────────────────────────────────────────────────────────────
 GRUPPO B — Credit score GLM BASSO (< 40) + OTTIMA gestione debito (< 500%)
-  (41 profili)
+  (42 profili)
 ─────────────────────────────────────────────────────────────────
-  Profilo 3     |  FlowScore: 30.4  |  debito_richiesto: €920  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 1.31
-  Profilo 42    |  FlowScore: 10.4  |  debito_richiesto: €792  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 1.09
-  Profilo 121   |  FlowScore: 14.0  |  debito_richiesto: €245  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.54
+  Profilo 42    |  FlowScore: 10.4  |  debito_richiesto: €792  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.91
+  Profilo 121   |  FlowScore: 14.0  |  debito_richiesto: €245  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.20
+  Profilo 109   |  FlowScore: 22.0  |  debito_richiesto: €944  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.60
   Profilo 142   |  FlowScore: 27.4  |  debito_richiesto: €1409  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 1.10
-  Profilo 182   |  FlowScore: 1.1  |  debito_richiesto: €640  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.69
+  Profilo 215   |  FlowScore: 31.0  |  debito_richiesto: €3454  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 2.19
+  Profilo 352   |  FlowScore: 21.7  |  debito_richiesto: €413  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.87
   Profilo 342   |  FlowScore: 3.7  |  debito_richiesto: €690  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.55
-  Profilo 352   |  FlowScore: 21.7  |  debito_richiesto: €413  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.84
-  Profilo 494   |  FlowScore: 22.6  |  debito_richiesto: €499  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.64
-  Profilo 79    |  FlowScore: 16.4  |  debito_richiesto: €535  |  final_debt: €16  |  perc_finale: 3.0%  |  fragility: 0.90
-  Profilo 269   |  FlowScore: 2.1  |  debito_richiesto: €885  |  final_debt: €52  |  perc_finale: 5.8%  |  fragility: 1.15
-  Profilo 281   |  FlowScore: 17.0  |  debito_richiesto: €302  |  final_debt: €60  |  perc_finale: 20.0%  |  fragility: 0.75
-  Profilo 231   |  FlowScore: 19.1  |  debito_richiesto: €505  |  final_debt: €181  |  perc_finale: 35.8%  |  fragility: 0.96
-  Profilo 328   |  FlowScore: 4.1  |  debito_richiesto: €1289  |  final_debt: €479  |  perc_finale: 37.2%  |  fragility: 1.60
-  Profilo 215   |  FlowScore: 31.0  |  debito_richiesto: €3454  |  final_debt: €1375  |  perc_finale: 39.8%  |  fragility: 2.19
-  Profilo 355   |  FlowScore: 20.2  |  debito_richiesto: €385  |  final_debt: €156  |  perc_finale: 40.5%  |  fragility: 0.82
-  Profilo 206   |  FlowScore: 25.5  |  debito_richiesto: €2899  |  final_debt: €1597  |  perc_finale: 55.1%  |  fragility: 2.80
-  Profilo 254   |  FlowScore: 33.7  |  debito_richiesto: €1309  |  final_debt: €830  |  perc_finale: 63.4%  |  fragility: 1.80
-  Profilo 448   |  FlowScore: 38.7  |  debito_richiesto: €2118  |  final_debt: €1447  |  perc_finale: 68.3%  |  fragility: 2.19
-  Profilo 109   |  FlowScore: 22.0  |  debito_richiesto: €944  |  final_debt: €826  |  perc_finale: 87.6%  |  fragility: 1.35
-  Profilo 66    |  FlowScore: 38.3  |  debito_richiesto: €2036  |  final_debt: €1834  |  perc_finale: 90.1%  |  fragility: 2.58
-  Profilo 426   |  FlowScore: 17.0  |  debito_richiesto: €1098  |  final_debt: €1142  |  perc_finale: 104.0%  |  fragility: 2.25
-  Profilo 340   |  FlowScore: 29.6  |  debito_richiesto: €442  |  final_debt: €490  |  perc_finale: 110.9%  |  fragility: 1.06
-  Profilo 331   |  FlowScore: 11.2  |  debito_richiesto: €1758  |  final_debt: €2018  |  perc_finale: 114.8%  |  fragility: 2.19
-  Profilo 54    |  FlowScore: 10.1  |  debito_richiesto: €1112  |  final_debt: €1431  |  perc_finale: 128.7%  |  fragility: 2.39
-  Profilo 272   |  FlowScore: 16.1  |  debito_richiesto: €478  |  final_debt: €663  |  perc_finale: 138.6%  |  fragility: 1.20
-  Profilo 376   |  FlowScore: 32.9  |  debito_richiesto: €730  |  final_debt: €1029  |  perc_finale: 141.0%  |  fragility: 1.35
-  Profilo 310   |  FlowScore: 26.1  |  debito_richiesto: €3576  |  final_debt: €5056  |  perc_finale: 141.4%  |  fragility: 9.16
-  Profilo 485   |  FlowScore: 23.9  |  debito_richiesto: €763  |  final_debt: €1231  |  perc_finale: 161.3%  |  fragility: 2.98
-  Profilo 135   |  FlowScore: 11.4  |  debito_richiesto: €630  |  final_debt: €1060  |  perc_finale: 168.3%  |  fragility: 1.42
-  Profilo 38    |  FlowScore: 4.2  |  debito_richiesto: €1988  |  final_debt: €3361  |  perc_finale: 169.1%  |  fragility: 3.38
-  Profilo 308   |  FlowScore: 25.2  |  debito_richiesto: €2350  |  final_debt: €4224  |  perc_finale: 179.7%  |  fragility: 6.40
-  Profilo 139   |  FlowScore: 15.3  |  debito_richiesto: €833  |  final_debt: €1840  |  perc_finale: 221.0%  |  fragility: 2.47
-  Profilo 147   |  FlowScore: 35.0  |  debito_richiesto: €887  |  final_debt: €2126  |  perc_finale: 239.6%  |  fragility: 2.31
-  Profilo 316   |  FlowScore: 10.6  |  debito_richiesto: €913  |  final_debt: €2255  |  perc_finale: 247.1%  |  fragility: 3.37
-  Profilo 170   |  FlowScore: 26.3  |  debito_richiesto: €1648  |  final_debt: €4097  |  perc_finale: 248.5%  |  fragility: 6.04
-  Profilo 232   |  FlowScore: 37.6  |  debito_richiesto: €902  |  final_debt: €2326  |  perc_finale: 257.9%  |  fragility: 2.72
-  Profilo 446   |  FlowScore: 23.5  |  debito_richiesto: €356  |  final_debt: €1000  |  perc_finale: 281.3%  |  fragility: 1.18
-  Profilo 242   |  FlowScore: 3.3  |  debito_richiesto: €838  |  final_debt: €2399  |  perc_finale: 286.1%  |  fragility: 3.81
-  Profilo 470   |  FlowScore: 35.6  |  debito_richiesto: €868  |  final_debt: €2772  |  perc_finale: 319.5%  |  fragility: 5.76
-  Profilo 384   |  FlowScore: 36.2  |  debito_richiesto: €479  |  final_debt: €2036  |  perc_finale: 425.1%  |  fragility: 1.98
-  Profilo 458   |  FlowScore: 38.5  |  debito_richiesto: €890  |  final_debt: €3955  |  perc_finale: 444.4%  |  fragility: 4.37
+  Profilo 355   |  FlowScore: 20.2  |  debito_richiesto: €385  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.66
+  Profilo 494   |  FlowScore: 22.6  |  debito_richiesto: €499  |  final_debt: €0  |  perc_finale: 0.0%  |  fragility: 0.70
+  Profilo 269   |  FlowScore: 2.1  |  debito_richiesto: €885  |  final_debt: €108  |  perc_finale: 12.2%  |  fragility: 1.02
+  Profilo 139   |  FlowScore: 15.3  |  debito_richiesto: €833  |  final_debt: €170  |  perc_finale: 20.4%  |  fragility: 1.03
+  Profilo 182   |  FlowScore: 1.1  |  debito_richiesto: €640  |  final_debt: €258  |  perc_finale: 40.4%  |  fragility: 1.10
+  Profilo 448   |  FlowScore: 38.7  |  debito_richiesto: €2118  |  final_debt: €943  |  perc_finale: 44.5%  |  fragility: 1.86
+  Profilo 254   |  FlowScore: 33.7  |  debito_richiesto: €1309  |  final_debt: €664  |  perc_finale: 50.7%  |  fragility: 1.68
+  Profilo 206   |  FlowScore: 25.5  |  debito_richiesto: €2899  |  final_debt: €1691  |  perc_finale: 58.3%  |  fragility: 2.68
+  Profilo 281   |  FlowScore: 17.0  |  debito_richiesto: €302  |  final_debt: €218  |  perc_finale: 72.2%  |  fragility: 0.94
+  Profilo 426   |  FlowScore: 17.0  |  debito_richiesto: €1098  |  final_debt: €837  |  perc_finale: 76.2%  |  fragility: 1.94
+  Profilo 66    |  FlowScore: 38.3  |  debito_richiesto: €2036  |  final_debt: €1555  |  perc_finale: 76.4%  |  fragility: 2.65
+  Profilo 231   |  FlowScore: 19.1  |  debito_richiesto: €505  |  final_debt: €436  |  perc_finale: 86.4%  |  fragility: 1.04
+  Profilo 3     |  FlowScore: 30.4  |  debito_richiesto: €920  |  final_debt: €801  |  perc_finale: 87.1%  |  fragility: 1.18
+  Profilo 310   |  FlowScore: 26.1  |  debito_richiesto: €3576  |  final_debt: €4068  |  perc_finale: 113.8%  |  fragility: 7.26
+  Profilo 79    |  FlowScore: 16.4  |  debito_richiesto: €535  |  final_debt: €641  |  perc_finale: 119.8%  |  fragility: 1.41
+  Profilo 38    |  FlowScore: 4.2  |  debito_richiesto: €1988  |  final_debt: €2384  |  perc_finale: 120.0%  |  fragility: 2.77
+  Profilo 376   |  FlowScore: 32.9  |  debito_richiesto: €730  |  final_debt: €977  |  perc_finale: 133.9%  |  fragility: 1.44
+  Profilo 331   |  FlowScore: 11.2  |  debito_richiesto: €1758  |  final_debt: €2361  |  perc_finale: 134.3%  |  fragility: 2.37
+  Profilo 54    |  FlowScore: 10.1  |  debito_richiesto: €1112  |  final_debt: €1503  |  perc_finale: 135.2%  |  fragility: 2.28
+  Profilo 340   |  FlowScore: 29.6  |  debito_richiesto: €442  |  final_debt: €659  |  perc_finale: 149.1%  |  fragility: 1.27
+  Profilo 328   |  FlowScore: 4.1  |  debito_richiesto: €1289  |  final_debt: €1949  |  perc_finale: 151.2%  |  fragility: 3.24
+  Profilo 272   |  FlowScore: 16.1  |  debito_richiesto: €478  |  final_debt: €771  |  perc_finale: 161.1%  |  fragility: 1.29
+  Profilo 308   |  FlowScore: 25.2  |  debito_richiesto: €2350  |  final_debt: €4752  |  perc_finale: 202.2%  |  fragility: 7.20
+  Profilo 232   |  FlowScore: 37.6  |  debito_richiesto: €902  |  final_debt: €2108  |  perc_finale: 233.8%  |  fragility: 2.40
+  Profilo 170   |  FlowScore: 26.3  |  debito_richiesto: €1648  |  final_debt: €3936  |  perc_finale: 238.8%  |  fragility: 5.80
+  Profilo 147   |  FlowScore: 35.0  |  debito_richiesto: €887  |  final_debt: €2244  |  perc_finale: 252.8%  |  fragility: 2.51
+  Profilo 458   |  FlowScore: 38.5  |  debito_richiesto: €890  |  final_debt: €2377  |  perc_finale: 267.1%  |  fragility: 3.15
+  Profilo 446   |  FlowScore: 23.5  |  debito_richiesto: €356  |  final_debt: €958  |  perc_finale: 269.3%  |  fragility: 1.13
+  Profilo 135   |  FlowScore: 11.4  |  debito_richiesto: €630  |  final_debt: €1735  |  perc_finale: 275.6%  |  fragility: 1.93
+  Profilo 470   |  FlowScore: 35.6  |  debito_richiesto: €868  |  final_debt: €2462  |  perc_finale: 283.8%  |  fragility: 5.39
+  Profilo 242   |  FlowScore: 3.3  |  debito_richiesto: €838  |  final_debt: €2478  |  perc_finale: 295.5%  |  fragility: 3.93
+  Profilo 485   |  FlowScore: 23.9  |  debito_richiesto: €763  |  final_debt: €2395  |  perc_finale: 313.8%  |  fragility: 4.14
+  Profilo 451   |  FlowScore: 38.3  |  debito_richiesto: €700  |  final_debt: €2383  |  perc_finale: 340.4%  |  fragility: 2.14
+  Profilo 316   |  FlowScore: 10.6  |  debito_richiesto: €913  |  final_debt: €3134  |  perc_finale: 343.4%  |  fragility: 4.69
+  Profilo 384   |  FlowScore: 36.2  |  debito_richiesto: €479  |  final_debt: €1935  |  perc_finale: 404.0%  |  fragility: 2.16
 
 =================================================================
-Totale profili paradosso: 81  (A=40 >= 500%, B=41 score basso + < 500%)
+Totale profili paradosso: 93  (A=51 >= 500%, B=42 score basso + < 500%)
 =================================================================
