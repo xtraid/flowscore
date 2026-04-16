@@ -1,6 +1,5 @@
 # FlowScore
 **Alternative credit scoring for young people with irregular incomes.**
-
 Built for SkillBoost Lab Hackathon 2026 — track: *Young People & Financial Inclusion*.
 
 ---
@@ -13,7 +12,6 @@ Standard banking products are designed for stable incomes. FlowScore evaluates w
 ---
 
 ## Architecture
-
 | Layer | Tool | Description |
 |---|---|---|
 | Risk Model | R (GLM) | Logistic regression on 6 cash flow variables → FlowScore 0–100 |
@@ -25,7 +23,6 @@ The three components communicate via CSV — no cross-language dependencies.
 ---
 
 ## Repo Structure
-
 ```
 flowscore/
 ├── data/
@@ -48,41 +45,73 @@ flowscore/
 
 ## Shock Simulation Model
 
-For each profile, the debt trajectory $D_i$ is simulated over 12 months:
+For each profile, the debt trajectory D_i is simulated over 12 months:
 
-**Income under shock:**
-$$y_i = \begin{cases} S & i < t_{\text{lost}} \\ S\,(1 - \alpha) & t_{\text{lost}} \le i < t_{\text{end}} \\ S & i \ge t_{\text{end}} \end{cases}$$
+### Income under shock:
 
-**Monthly expenses:** $e_i \sim \mathcal{N}(\mu_e, \sigma_e)$
+```
+y_i = S                     if i < t_lost        (no shock)
+y_i = S(1 - α)              if t_lost ≤ i < t_end (shock active)
+y_i = S                     if i ≥ t_end          (recovery)
+```
 
-**Debt dynamics** ($D_0 = D_{\text{init}} + \text{credito richiesto}$):
-$$D_i = \begin{cases} D_{i-1} + (e_i - y_i) & \text{se } e_i > y_i \\ \max(0,\; D_{i-1} + \eta\,(e_i - y_i)) & \text{se } e_i \le y_i \end{cases}$$
+Where:
+- **S** = stable monthly income
+- **α** = severity of income loss (0.2 to 0.6)
+- **t_lost, t_end** = shock start and end months
 
-**Fragility Index:** $\displaystyle\frac{\max_i D_i}{\bar{y}}$ — picco del debito in numero di mensilità di reddito.
+### Monthly expenses:
+```
+e_i ~ Normal(μ_e, σ_e)
+```
+Monthly expenses drawn from normal distribution with mean μ_e and std dev σ_e.
+
+### Debt dynamics:
+```
+If e_i > y_i (expenses exceed income):
+    D_i = D_(i-1) + (e_i - y_i)
+
+If e_i ≤ y_i (income covers expenses):
+    D_i = max(0, D_(i-1) + η(e_i - y_i))
+```
+
+Where:
+- **D_0** = initial debt + requested credit
+- **η** = repayment coefficient (typically 0.3–0.5)
+
+### Fragility Index:
+
+```
+Fragility = max_i(D_i) / mean(y)
+```
+
+Peak debt expressed as **months of income**. Example: Fragility = 3.5 means peak debt equals 3.5 months of average income.
 
 ### Scenari simulati
 
-| Scenario | $\alpha$ | Durata shock | Colore |
-|---|---|---|---|
-| Best case | 0% | nessuno | verde |
-| Lieve | 20% | 2 mesi | blu |
-| Medio | 40% | 4 mesi | arancio |
-| Grave | 60% | 6 mesi | rosso |
+| Scenario | Income Loss (α) | Duration | Color | Notes |
+|---|---|---|---|---|
+| Best case | 0% | none | 🟢 Green | Baseline: no shock |
+| Mild | 20% | 2 months | 🔵 Blue | Minor disruption (freelance gap) |
+| Medium | 40% | 4 months | 🟠 Orange | Significant shock (contract loss) |
+| Severe | 60% | 6 months | 🔴 Red | Major crisis (long-term unemployment) |
 
-> Se il debito non converge nel **best case**, il credito non viene concesso.
+**Credit decision rule:** If debt does not converge in the *best case* scenario, the credit is rejected regardless of FlowScore.
 
 ---
 
 ## Input Variables (GLM)
 
-| Variable | Description |
-|---|---|
-| `income_volatility` | Std dev of monthly income / mean income |
-| `fixed_cost_ratio` | Fixed expenses / total income |
-| `liquidity_buffer` | Mean monthly savings |
-| `bnpl_exposure` | Active BNPL/revolving credit as % of income |
-| `income_trend` | Linear trend of income over 6 months |
-| `debt_0` | Current debt level at time of application |
+| Variable | Description | Range |
+|---|---|---|
+| `income_volatility` | Coefficient of variation: std_dev(income) / mean(income) | 0.1–1.0 |
+| `fixed_cost_ratio` | Fixed expenses / total income | 0.2–0.9 |
+| `liquidity_buffer` | Mean monthly savings | €0–€5000 |
+| `bnpl_exposure` | Active BNPL/revolving credit as % of monthly income | 0–300% |
+| `income_trend` | Linear trend coefficient (6-month slope) | -0.5–+0.5 |
+| `debt_0` | Current debt level at time of application | €0–€20000 |
+
+**Output:** FlowScore (0–100), where 0 = highest risk, 100 = lowest risk.
 
 ---
 
@@ -106,14 +135,15 @@ python demo/flowscore_demo.py
 ---
 
 ## Team
-
 | Name | Background | Role |
 |---|---|---|
-| Chris | MSc AI, University of Trieste | Python pipeline, simulation, demo, repo |
+| Chris | Second-year AIDA, University of Trieste | Python pipeline, simulation, demo, repo |
 | [Name] | MSc Actuarial Science, BSc Mathematics | R risk model |
-| [Name] | MSc Physics, ICTP Trieste | Data generation, EDA |
+| [Name] | MSc Physics, ICTP Trieste | Data generation, shock modeling |
 
 ---
 
 ## Status
-Hackathon: March 13–16, 2026
+**Hackathon:** SkillBoost Lab 2026 (March 13–16)  
+**Track:** Young People & Financial Inclusion  
+**License:** MIT
