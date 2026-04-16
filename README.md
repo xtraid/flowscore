@@ -135,11 +135,16 @@ python demo/flowscore_demo.py
 ---
 
 ## Team
+
+<div align="center">
+
 | Name | Background | Role |
 |---|---|---|
-| Chris | Second-year AIDA, University of Trieste | Python pipeline, simulation, demo, repo |
-| [Name] | MSc Actuarial Science, BSc Mathematics | R risk model |
-| [Name] | MSc Physics, ICTP Trieste | Data generation, shock modeling |
+| Manuel Magnabosco | Second-year AIDA, University of Trieste | Python pipeline, simulation, demo, repo |
+| Giulia Merli | MSc Actuarial Science, BSc Mathematics | R risk model |
+| Adriel Ernesto Rodriguez Concepción | MSc Physics, ICTP Trieste | Data generation, shock modeling |
+
+</div>
 
 ---
 
