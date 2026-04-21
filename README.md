@@ -1,154 +1,116 @@
-# FlowScore
-**Alternative credit scoring for young people with irregular incomes.**
-Built for SkillBoost Lab Hackathon 2026 — track: *Young People & Financial Inclusion*.
+# FlowScore — Alternative Credit Scoring for Gig Workers
+
+Hackathon project exploring cash-flow-based credit scoring as alternative to traditional credit history for underbanked Italian freelance and gig workers.
 
 ---
 
-## What is FlowScore?
-FlowScore assigns a 0–100 financial risk score to individuals based on **cash flow patterns** rather than traditional credit history. It targets young Italians with precarious, discontinuous incomes who are structurally excluded from standard banking products.
+🏆 SkillBoost Lab Hackathon 2026 · Team project · March 2026
 
-Standard banking products are designed for stable incomes. FlowScore evaluates what actually matters for this demographic: income volatility, liquidity buffers, fixed cost exposure, and resilience to financial shocks.
+---
+
+![FlowScore dashboard — profile 0, FlowScore 96.2, solvent under all shock scenarios](pngs/good_guy.png)
+*Interactive Dash dashboard — profile 0 (FlowScore 96.2, solvent under all shock scenarios)*
+
+---
+
+## The Problem
+
+Around 4 million Italian gig workers and freelancers are underbanked — not because they are financially irresponsible, but because traditional credit scoring relies on credit history they simply don't have. Irregular income, multiple clients, and no payslips make them invisible to conventional models even when their actual cash flow is healthy.
+
+FlowScore replaces credit history with cash-flow pattern analysis: income volatility, liquidity buffers, fixed-cost exposure, and resilience to income shocks. The goal is a score that reflects financial behavior, not financial conformity.
 
 ---
 
 ## Architecture
-| Layer | Tool | Description |
+
+Three independent layers connected by CSV data contracts — no cross-language runtime dependencies, each built independently by a different team member:
+
+**Layer 1 — Synthetic data engine (Python / SimPy)**
+Generates 500 synthetic gig-worker profiles over 6 months, sampling income volatility, fixed-cost ratios, liquidity buffers, BNPL exposure, income trend, and initial debt from empirically grounded distributions.
+
+**Layer 2 — GLM credit scoring model (R)**
+Logistic regression on 6 cash-flow variables → FlowScore 0–100. Reads `data/profiles.csv`, writes `model/scores_output.csv`.
+
+**Layer 3 — ODE debt trajectory simulator (Python)**
+Simulates debt evolution under 4 income shock scenarios (best case, mild −20% / 2 months, medium −40% / 4 months, severe −60% / 6 months) using a discrete-time debt ODE. Reads scores and profiles, writes `simulation/simulation_output.csv`.
+
+**Integration layer — Dash dashboard (Python)**
+Reads all CSVs; no live model calls. Profile selector, FlowScore gauge, debt trajectory chart, fragility scatter.
+
+The CSV-as-contract design meant the R modeler, the physics lead on the ODE, and the Python pipeline owner could work in parallel without merge conflicts or environment dependencies.
+
+---
+
+## The Interesting Part: Paradox Profiles
+
+A validation script cross-checks GLM FlowScores against ODE debt outcomes. It found **93 paradox profiles** across two failure modes:
+
+- **Group A (51 profiles):** High FlowScore (often >90), but debt explodes to ≥500% of the requested amount under medium shock
+- **Group B (42 profiles):** Low FlowScore (<40), but debt stays manageable under the same shock
+
+This is not a footnote — it is the central argument of the pitch: the GLM captures static cash-flow health, but misses dynamic fragility. A borrower can look creditworthy on paper while being structurally vulnerable to any income disruption.
+
+![Profile 42 — FlowScore 94.7, debt reaches 510% under medium shock](pngs/paradox.png)
+*Profile 42: FlowScore 94.7 (the model says "healthy") — under medium shock (−40% income for 4 months), final debt reaches 510% of the amount requested. Under severe shock: 461%.*
+
+The script that surfaced these profiles is in `simulation/profili_paradosso.txt`. The finding is presented as an explicit critique of the model, not hidden from the judges.
+
+---
+
+## Dashboard Tour
+
+| Screenshot | Profile | Notes |
 |---|---|---|
-| Risk Model | R (GLM) | Logistic regression on 6 cash flow variables → FlowScore 0–100 |
-| Shock Simulation | Python | Discrete-time debt trajectory under 4 income shock scenarios |
-| Demo | Python (Dash) | Interactive dashboard — FlowScore gauge, debt trajectories, fragility scatter |
-
-The three components communicate via CSV — no cross-language dependencies.
+| ![Healthy profile](pngs/good_guy.png) | FlowScore 96.2 | Debt converges under all four shock scenarios |
+| ![Moderate profile](pngs/flo_86_4_debt%20growing.png) | FlowScore 86.4 | Debt grows under shock but stays within manageable range |
+| ![Fragile profile](pngs/we_have_the_expected_oover_askd.png) | FlowScore 10.4 | Correctly flagged as fragile — high fragility index, poor resilience |
 
 ---
 
-## Repo Structure
-```
-flowscore/
-├── data/
-│   ├── generate_synthetic_data.py   # generates synthetic user profiles
-│   ├── explore_profiles.py          # EDA on generated profiles
-│   └── profiles.csv                 # 500 synthetic profiles
-├── model/
-│   ├── credit_model.R               # GLM logistic regression (R)
-│   └── scores_output.csv            # exported FlowScores (0–100)
-├── simulation/
-│   ├── shock_model.py               # debt trajectory simulation (Python)
-│   ├── simulation_output.csv        # generated by shock_model.py
-│   └── profili_paradosso.txt        # report: GLM vs shock resilience
-├── demo/
-│   └── flowscore_demo.py            # interactive Dash dashboard
-└── README.md
-```
+## What I Built vs What the Team Built
+
+**My role (architecture & problem design):**
+- Problem scoping and framing (gig economy credit gap, underbanked Italian freelancers)
+- Synthetic data model design and Python implementation (`data/generate_synthetic_data.py`) — variable distributions, SimPy event simulation, 500 profiles × 6 months
+- Shock scenario definition (four scenarios, severity and duration parameters)
+- Fragility Index design (`max(D_i) / mean(income)` — peak debt in months of income)
+- Validation script that cross-checked GLM scores against ODE outcomes and identified the 93 paradox profiles (`simulation/profili_paradosso.txt`)
+
+**Teammates:**
+- **Giulia Merli** (MSc Actuarial Science): R GLM model — variable selection, logistic regression, FlowScore calibration
+- **Adriel Ernesto Rodriguez Concepción** (MSc Physics, ICTP): ODE Euler integration for debt trajectories, shock simulation mechanics, Dash dashboard assembly
 
 ---
 
-## Shock Simulation Model
+## Stack
 
-For each profile, the debt trajectory D_i is simulated over 12 months:
-
-### Income under shock:
-
-```
-y_i = S                     if i < t_lost        (no shock)
-y_i = S(1 - α)              if t_lost ≤ i < t_end (shock active)
-y_i = S                     if i ≥ t_end          (recovery)
-```
-
-Where:
-- **S** = stable monthly income
-- **α** = severity of income loss (0.2 to 0.6)
-- **t_lost, t_end** = shock start and end months
-
-### Monthly expenses:
-```
-e_i ~ Normal(μ_e, σ_e)
-```
-Monthly expenses drawn from normal distribution with mean μ_e and std dev σ_e.
-
-### Debt dynamics:
-```
-If e_i > y_i (expenses exceed income):
-    D_i = D_(i-1) + (e_i - y_i)
-
-If e_i ≤ y_i (income covers expenses):
-    D_i = max(0, D_(i-1) + η(e_i - y_i))
-```
-
-Where:
-- **D_0** = initial debt + requested credit
-- **η** = repayment coefficient (typically 0.3–0.5)
-
-### Fragility Index:
-
-```
-Fragility = max_i(D_i) / mean(y)
-```
-
-Peak debt expressed as **months of income**. Example: Fragility = 3.5 means peak debt equals 3.5 months of average income.
-
-### Scenari simulati
-
-| Scenario | Income Loss (α) | Duration | Color | Notes |
-|---|---|---|---|---|
-| Best case | 0% | none | 🟢 Green | Baseline: no shock |
-| Mild | 20% | 2 months | 🔵 Blue | Minor disruption (freelance gap) |
-| Medium | 40% | 4 months | 🟠 Orange | Significant shock (contract loss) |
-| Severe | 60% | 6 months | 🔴 Red | Major crisis (long-term unemployment) |
-
-**Credit decision rule:** If debt does not converge in the *best case* scenario, the credit is rejected regardless of FlowScore.
+| Component | Technology |
+|---|---|
+| Synthetic data | Python, SimPy, pandas, NumPy |
+| Credit scoring | R, GLM (logistic regression) |
+| Debt simulation | Python, scipy, NumPy |
+| Dashboard | Python, Dash, Plotly |
+| Data contracts | CSV (profiles, scores, simulation output) |
 
 ---
 
-## Input Variables (GLM)
-
-| Variable | Description | Range |
-|---|---|---|
-| `income_volatility` | Coefficient of variation: std_dev(income) / mean(income) | 0.1–1.0 |
-| `fixed_cost_ratio` | Fixed expenses / total income | 0.2–0.9 |
-| `liquidity_buffer` | Mean monthly savings | €0–€5000 |
-| `bnpl_exposure` | Active BNPL/revolving credit as % of monthly income | 0–300% |
-| `income_trend` | Linear trend coefficient (6-month slope) | -0.5–+0.5 |
-| `debt_0` | Current debt level at time of application | €0–€20000 |
-
-**Output:** FlowScore (0–100), where 0 = highest risk, 100 = lowest risk.
-
----
-
-## Quick Start
+## Run It
 
 ```bash
 # 1. Generate synthetic profiles
 python data/generate_synthetic_data.py
 
-# 2. Run R model → produces model/scores_output.csv
+# 2. Run R GLM model → produces model/scores_output.csv
 Rscript model/credit_model.R
 
-# 3. Run Python simulation → produces simulation/simulation_output.csv
+# 3. Run debt trajectory simulation → produces simulation/simulation_output.csv
 python simulation/shock_model.py
 
-# 4. Launch interactive demo
+# 4. Launch interactive dashboard
 python demo/flowscore_demo.py
 # → open http://127.0.0.1:8050
 ```
 
 ---
 
-## Team
-
-<div align="center">
-
-| Name | Background | Role |
-|---|---|---|
-| Manuel Magnabosco | Second-year AIDA, University of Trieste | Python pipeline, simulation, demo, repo |
-| Giulia Merli | MSc Actuarial Science, BSc Mathematics | R risk model |
-| Adriel Ernesto Rodriguez Concepción | MSc Physics, ICTP Trieste | Data generation, shock modeling |
-
-</div>
-
----
-
-## Status
-**Hackathon:** SkillBoost Lab 2026 (March 13–16)  
-**Track:** Young People & Financial Inclusion  
-**License:** MIT
+**Hackathon:** SkillBoost Lab 2026 (March 13–16) · Track: Young People & Financial Inclusion · License: MIT
