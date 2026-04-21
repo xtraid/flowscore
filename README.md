@@ -63,7 +63,7 @@ The script that surfaced these profiles is in `simulation/profili_paradosso.txt`
 |---|---|---|
 | ![Healthy profile](pngs/good_guy.png) | FlowScore 96.2 | Debt converges under all four shock scenarios |
 | ![Moderate profile](pngs/flo_86_4_debt%20growing.png) | FlowScore 86.4 | Debt grows under shock but stays within manageable range |
-| ![Fragile profile](pngs/we_have_the_expected_oover_askd.png) | FlowScore 10.4 | Correctly flagged as fragile — high fragility index, poor resilience |
+| ![Debt ratio view](pngs/we_have_the_expected_oover_askd.png) | Debt ratio chart | Final debt / amount requested at end of shock — shown below each trajectory chart |
 
 ---
 
